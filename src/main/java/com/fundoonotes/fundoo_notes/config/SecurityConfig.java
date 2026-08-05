@@ -63,8 +63,10 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(List.of(
-                "http://localhost:4200"
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:4200",
+                "https://*.vercel.app",
+                "https://fundoo-frontend-kappa.vercel.app"
         ));
 
         config.setAllowedHeaders(List.of("*"));

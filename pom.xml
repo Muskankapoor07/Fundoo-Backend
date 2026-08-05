@@ -71,11 +71,11 @@
 
 		<!-- Loads variables from a .env file into Spring's Environment
 		     so application.yml can reference them as ${VAR_NAME} -->
-<!--		<dependency>-->
-<!--			<groupId>me.paulschwarz</groupId>-->
-<!--			<artifactId>spring-dotenv</artifactId>-->
-<!--			<version>4.0.0</version>-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
 
 		<!-- Swagger / OpenAPI UI for API testing at /swagger-ui.html -->
 		<dependency>
