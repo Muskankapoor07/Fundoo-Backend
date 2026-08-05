@@ -42,38 +42,50 @@ public class JwtFilter extends OncePerRequestFilter {
             token = authHeader.substring(7);
 
             try {
-                // STEP 0 — REJECT BLACKLISTED (LOGGED OUT) TOKENS
-                if (Boolean.TRUE.equals(redisTemplate.hasKey("BLACKLIST:" + token))) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("Token has been logged out");
-                    return;
+                // STEP 0 — CHECK BLACKLISTED TOKENS (REDIS SAFE)
+                try {
+                    if (redisTemplate != null && Boolean.TRUE.equals(redisTemplate.hasKey("BLACKLIST:" + token))) {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("Token has been logged out");
+                        return;
+                    }
+                } catch (Exception re) {
+                    System.err.println("Redis blacklist check warning: " + re.getMessage());
                 }
 
-                // STEP 1 — CHECK REDIS CACHE FIRST
-                String cachedEmail = redisTemplate.opsForValue()
-                        .get("TOKEN:" + token);
+                // STEP 1 — CHECK REDIS CACHE FIRST (REDIS SAFE)
+                String cachedEmail = null;
+                try {
+                    if (redisTemplate != null) {
+                        cachedEmail = redisTemplate.opsForValue().get("TOKEN:" + token);
+                    }
+                } catch (Exception re) {
+                    System.err.println("Redis cache read warning: " + re.getMessage());
+                }
 
                 if (cachedEmail != null) {
-                    // Token found in Redis cache — use it directly
-                    // No need to parse JWT again — FASTER!
                     email = cachedEmail;
                 } else {
-                    // Token not in cache — parse JWT
+                    // STEP 2 — FALLBACK TO JWT PARSING
                     email = jwtUtil.extractEmail(token);
 
                     if (email != null && jwtUtil.isTokenValid(token)) {
-                        // STEP 2 — SAVE TO REDIS CACHE for next requests
-                        // Expires in 24 hours same as JWT
-                        redisTemplate.opsForValue().set(
-                                "TOKEN:" + token,
-                                email,
-                                24,
-                                TimeUnit.HOURS
-                        );
+                        try {
+                            if (redisTemplate != null) {
+                                redisTemplate.opsForValue().set(
+                                        "TOKEN:" + token,
+                                        email,
+                                        24,
+                                        TimeUnit.HOURS
+                                );
+                            }
+                        } catch (Exception re) {
+                            System.err.println("Redis cache write warning: " + re.getMessage());
+                        }
                     }
                 }
             } catch (Exception e) {
-                // Invalid token — continue without setting auth
+                System.err.println("JWT authentication error: " + e.getMessage());
             }
         }
 
