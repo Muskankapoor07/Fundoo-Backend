@@ -31,7 +31,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String toEmail, String token) {
 
-        String link = "http://localhost:4200/reset-password?token=" + token;
+        String link = "https://fundoo-frontend-kappa.vercel.app/reset-password?token=" + token;
 
         String html = """
 <!DOCTYPE html>
