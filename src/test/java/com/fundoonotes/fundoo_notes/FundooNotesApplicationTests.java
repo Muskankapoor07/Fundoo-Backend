@@ -35,7 +35,7 @@ class FundooNotesApplicationTests {
         try {
             System.out.println("Sending test email...");
             emailService.sendReminderAddedEmail(
-                "kapoormuskan801@gmail.com",
+                "test@example.com",
                 "Test Note Reminder",
                 LocalDateTime.now()
             );
