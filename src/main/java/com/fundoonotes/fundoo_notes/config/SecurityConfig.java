@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/",
                                 "/api/users/register",
@@ -63,11 +64,7 @@ public class SecurityConfig {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:4200",
-                "https://*.vercel.app",
-                "https://fundoo-frontend-kappa.vercel.app"
-        ));
+        config.setAllowedOriginPatterns(List.of("*"));
 
         config.setAllowedHeaders(List.of("*"));
 
