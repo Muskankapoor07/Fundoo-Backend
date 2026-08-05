@@ -14,12 +14,15 @@ import com.fundoonotes.fundoo_notes.service.NoteService;
 import com.fundoonotes.fundoo_notes.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class NoteServiceImpl implements NoteService {
 
     @Autowired
@@ -36,6 +39,7 @@ public class NoteServiceImpl implements NoteService {
 
     // CONVERT NOTE TO RESPONSE DTO
     private NoteResponseDTO toDTO(Note note) {
+        if (note == null) return null;
         NoteResponseDTO dto = new NoteResponseDTO();
         dto.setId(note.getId());
         dto.setTitle(note.getTitle());
@@ -48,18 +52,36 @@ public class NoteServiceImpl implements NoteService {
         dto.setReminderSent(note.isReminderSent());
         dto.setCreatedAt(note.getCreatedAt());
         dto.setUpdatedAt(note.getUpdatedAt());
-        dto.setOwnerEmail(note.getUser().getEmail()); // POPULATE OWNER EMAIL
-        List<LabelResponseDTO> labelDTOs = note.getLabels()
-                .stream()
-                .map(label -> new LabelResponseDTO(label.getId(), label.getName()))
-                .collect(Collectors.toList());
-        dto.setLabels(labelDTOs);
+
+        if (note.getUser() != null) {
+            dto.setOwnerEmail(note.getUser().getEmail());
+        }
+
+        if (note.getLabels() != null) {
+            List<LabelResponseDTO> labelDTOs = note.getLabels()
+                    .stream()
+                    .filter(label -> label != null)
+                    .map(label -> new LabelResponseDTO(label.getId(), label.getName()))
+                    .collect(Collectors.toList());
+            dto.setLabels(labelDTOs);
+        } else {
+            dto.setLabels(new ArrayList<>());
+        }
         
-        List<String> collaborators = collaboratorRepository.findByNote(note)
-                .stream()
-                .map(c -> c.getUser().getEmail())
-                .collect(Collectors.toList());
-        dto.setCollaborators(collaborators);
+        if (collaboratorRepository != null) {
+            try {
+                List<String> collaborators = collaboratorRepository.findByNote(note)
+                        .stream()
+                        .filter(c -> c != null && c.getUser() != null)
+                        .map(c -> c.getUser().getEmail())
+                        .collect(Collectors.toList());
+                dto.setCollaborators(collaborators);
+            } catch (Exception e) {
+                dto.setCollaborators(new ArrayList<>());
+            }
+        } else {
+            dto.setCollaborators(new ArrayList<>());
+        }
         
         return dto;
     }
