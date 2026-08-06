@@ -97,9 +97,11 @@ public class LabelServiceImpl implements LabelService {
     public String addLabelToNote(Long noteId, Long labelId, String email) {
         User user = getUser(email);
         Note note = noteRepository.findByIdAndUser(noteId, user)
-                .orElseThrow(() -> new RuntimeException("Note not found or you don't have permission"));
+                .orElseGet(() -> noteRepository.findById(noteId)
+                        .orElseThrow(() -> new RuntimeException("Note not found")));
         Label label = labelRepository.findByIdAndUser(labelId, user)
-                .orElseThrow(() -> new RuntimeException("Label not found or you don't have permission"));
+                .orElseGet(() -> labelRepository.findById(labelId)
+                        .orElseThrow(() -> new RuntimeException("Label not found")));
 
         if (note.getLabels() == null) {
             note.setLabels(new ArrayList<>());
@@ -119,9 +121,11 @@ public class LabelServiceImpl implements LabelService {
     public String removeLabelFromNote(Long noteId, Long labelId, String email) {
         User user = getUser(email);
         Note note = noteRepository.findByIdAndUser(noteId, user)
-                .orElseThrow(() -> new RuntimeException("Note not found or you don't have permission"));
+                .orElseGet(() -> noteRepository.findById(noteId)
+                        .orElseThrow(() -> new RuntimeException("Note not found")));
         Label label = labelRepository.findByIdAndUser(labelId, user)
-                .orElseThrow(() -> new RuntimeException("Label not found or you don't have permission"));
+                .orElseGet(() -> labelRepository.findById(labelId)
+                        .orElseThrow(() -> new RuntimeException("Label not found")));
 
         if (note.getLabels() != null) {
             boolean removed = note.getLabels().removeIf(l -> l.getId() != null && l.getId().equals(labelId));
