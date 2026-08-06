@@ -80,9 +80,9 @@ public class LabelServiceImpl implements LabelService {
         // Universal cleanup using standard JPA findAll()
         List<Note> allNotes = noteRepository.findAll();
         for (Note note : allNotes) {
-            if (note.getUser() != null && note.getUser().getId().equals(user.getId())) {
-                if (note.getLabels() != null && note.getLabels().contains(label)) {
-                    note.getLabels().remove(label);
+            if (note.getLabels() != null) {
+                boolean removed = note.getLabels().removeIf(l -> l.getId() != null && l.getId().equals(labelId));
+                if (removed) {
                     noteRepository.save(note);
                 }
             }
@@ -100,11 +100,18 @@ public class LabelServiceImpl implements LabelService {
                 .orElseThrow(() -> new RuntimeException("Note not found or you don't have permission"));
         Label label = labelRepository.findByIdAndUser(labelId, user)
                 .orElseThrow(() -> new RuntimeException("Label not found or you don't have permission"));
-        if (note.getLabels().contains(label)) {
-            throw new RuntimeException("Label already added to this note");
+
+        if (note.getLabels() == null) {
+            note.setLabels(new ArrayList<>());
         }
-        note.getLabels().add(label);
-        noteRepository.save(note);
+
+        boolean alreadyExists = note.getLabels().stream()
+                .anyMatch(l -> l.getId() != null && l.getId().equals(labelId));
+
+        if (!alreadyExists) {
+            note.getLabels().add(label);
+            noteRepository.save(note);
+        }
         return "Label added to note successfully";
     }
 
@@ -115,8 +122,13 @@ public class LabelServiceImpl implements LabelService {
                 .orElseThrow(() -> new RuntimeException("Note not found or you don't have permission"));
         Label label = labelRepository.findByIdAndUser(labelId, user)
                 .orElseThrow(() -> new RuntimeException("Label not found or you don't have permission"));
-        note.getLabels().remove(label);
-        noteRepository.save(note);
+
+        if (note.getLabels() != null) {
+            boolean removed = note.getLabels().removeIf(l -> l.getId() != null && l.getId().equals(labelId));
+            if (removed) {
+                noteRepository.save(note);
+            }
+        }
         return "Label removed from note successfully";
     }
 
