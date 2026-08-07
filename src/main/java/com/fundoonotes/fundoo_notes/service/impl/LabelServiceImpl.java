@@ -110,11 +110,11 @@ public class LabelServiceImpl implements LabelService {
         }
 
         boolean alreadyExists = note.getLabels().stream()
-                .anyMatch(l -> l.getId() != null && l.getId().equals(labelId));
+                .anyMatch(l -> l != null && l.getId() != null && l.getId().equals(labelId));
 
         if (!alreadyExists) {
             note.getLabels().add(label);
-            noteRepository.save(note);
+            noteRepository.saveAndFlush(note);
         }
         return "Label added to note successfully";
     }
@@ -125,14 +125,11 @@ public class LabelServiceImpl implements LabelService {
         Note note = noteRepository.findByIdAndUser(noteId, user)
                 .orElseGet(() -> noteRepository.findById(noteId)
                         .orElseThrow(() -> new RuntimeException("Note not found")));
-        Label label = labelRepository.findByIdAndUser(labelId, user)
-                .orElseGet(() -> labelRepository.findById(labelId)
-                        .orElseThrow(() -> new RuntimeException("Label not found")));
 
         if (note.getLabels() != null) {
-            boolean removed = note.getLabels().removeIf(l -> l.getId() != null && l.getId().equals(labelId));
+            boolean removed = note.getLabels().removeIf(l -> l != null && l.getId() != null && l.getId().equals(labelId));
             if (removed) {
-                noteRepository.save(note);
+                noteRepository.saveAndFlush(note);
             }
         }
         return "Label removed from note successfully";
