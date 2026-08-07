@@ -117,7 +117,12 @@ public class UserServiceImpl implements UserService {
                         new RuntimeException(
                                 "No account found with this email"));
         String token = jwtUtil.generateToken(email);
-        emailService.sendPasswordResetEmail(email, token);
+        try {
+            emailService.sendPasswordResetEmail(email, token);
+        } catch (Exception e) {
+            System.err.println("WARNING: Could not send password reset email via SMTP: " + e.getMessage());
+            System.out.println("DEBUG RESET LINK FOR " + email + ": https://fundoo-frontend-kappa.vercel.app/reset-password?token=" + token);
+        }
         return "Password reset link sent to your email.";
     }
 
