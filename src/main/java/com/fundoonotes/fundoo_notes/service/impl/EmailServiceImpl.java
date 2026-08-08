@@ -496,7 +496,7 @@ public class EmailServiceImpl implements EmailService {
     private void sendEmail(String to,
                            String subject,
                            String body) {
-
+        String lastError = "Unknown error";
         System.out.println("📧 [EMAIL INITIATED] Attempting to send email to: " + to + " | Subject: " + subject);
 
         // 1. Attempt delivery via JavaMailSender (SMTP)
