@@ -122,6 +122,7 @@ public class UserServiceImpl implements UserService {
         } catch (Exception e) {
             System.err.println("WARNING: Could not send password reset email via SMTP: " + e.getMessage());
             System.out.println("DEBUG RESET LINK FOR " + email + ": https://fundoo-frontend-kappa.vercel.app/reset-password?token=" + token);
+            throw new RuntimeException("Failed to send reset email: " + e.getMessage());
         }
         return "Password reset link sent to your email.";
     }

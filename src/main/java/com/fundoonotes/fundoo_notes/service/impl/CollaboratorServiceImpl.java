@@ -90,6 +90,7 @@ public class CollaboratorServiceImpl implements CollaboratorService {
             emailService.sendCollaboratorEmail(dto.getEmail(), ownerEmail, note.getTitle());
         } catch (Exception e) {
             System.err.println("Failed to send email notification: " + e.getMessage());
+            throw new RuntimeException("Collaborator added, but failed to send email: " + e.getMessage());
         }
 
         return toDTO(savedCollaborator);
