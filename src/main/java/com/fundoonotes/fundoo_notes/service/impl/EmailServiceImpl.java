@@ -515,6 +515,7 @@ public class EmailServiceImpl implements EmailService {
             return;
 
         } catch (Exception e) {
+            lastError = e.getMessage();
             System.err.println("⚠️ [SMTP FAILED] Could not send via SMTP to " + to + ": " + e.getMessage());
         }
 
@@ -526,13 +527,14 @@ public class EmailServiceImpl implements EmailService {
                 System.out.println("✅ [BREVO REST API SUCCESS] Email successfully delivered via Brevo API to " + to);
                 return;
             } catch (Exception apiEx) {
+                lastError = apiEx.getMessage();
                 System.err.println("❌ [BREVO REST API FAILED] " + apiEx.getMessage());
             }
         } else {
             System.err.println("⚠️ [NOTICE] Brevo key / password is empty. Set SPRING_MAIL_PASSWORD in Render Environment Variables.");
         }
 
-        throw new RuntimeException("Failed to send email to " + to + ". Please verify Brevo SMTP Key and Sender verification.");
+        throw new RuntimeException("Failed to send email to " + to + ": " + lastError);
     }
 
     private void sendViaBrevoApi(String to, String subject, String htmlContent) throws Exception {
