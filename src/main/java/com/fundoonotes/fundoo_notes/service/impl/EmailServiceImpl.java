@@ -1,13 +1,23 @@
 package com.fundoonotes.fundoo_notes.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fundoonotes.fundoo_notes.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -15,12 +25,24 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Value("${spring.mail.from:kapoormuskan700@gmail.com}")
     private String fromEmail;
 
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
+
+    @Value("${app.frontend.url:https://fundoo-frontend-kappa.vercel.app}")
+    private String frontendUrl;
+
+    @Value("${app.backend.url:https://fundoo-backend-adz1.onrender.com}")
+    private String backendUrl;
+
     @Override
     public void sendVerificationEmail(String toEmail, String token) {
-        String link = "http://localhost:8080/api/users/verify?token=" + token;
+        String link = backendUrl + "/api/users/verify?token=" + token;
         sendEmail(toEmail,
                 "Verify Your Fundoo Notes Account",
                 "Hello,\n\nClick to verify your account:\n\n"
@@ -31,7 +53,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String toEmail, String token) {
 
-        String link = "https://fundoo-frontend-kappa.vercel.app/reset-password?token=" + token;
+        String link = frontendUrl + "/reset-password?token=" + token;
 
         String html = """
 <!DOCTYPE html>
@@ -88,7 +110,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendReminderEmail(String toEmail, String noteTitle) {
 
-        String link = "http://localhost:4200/signin";
+        String link = frontendUrl + "/signin";
 
         String html = """
 <!DOCTYPE html>
@@ -105,13 +127,13 @@ public class EmailServiceImpl implements EmailService {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   .wrapper {
-    width: 100%%;
+    width: 100%;
     table-layout: fixed;
     background-color: #f8fafc;
     padding: 40px 0;
   }
   .main-table {
-    width: 100%%;
+    width: 100%;
     max-width: 550px;
     margin: 0 auto;
     background-color: #ffffff;
@@ -121,7 +143,7 @@ public class EmailServiceImpl implements EmailService {
     border: 1px solid #e2e8f0;
   }
   .header {
-    background: linear-gradient(135deg, #4f46e5 0%%, #06b6d4 100%%);
+    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
     padding: 40px;
     text-align: center;
     color: #ffffff;
@@ -183,7 +205,7 @@ public class EmailServiceImpl implements EmailService {
     margin: 35px 0 15px 0;
   }
   .btn {
-    background: linear-gradient(135deg, #4f46e5 0%%, #06b6d4 100%%);
+    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
     color: #ffffff !important;
     text-decoration: none;
     padding: 14px 36px;
@@ -256,7 +278,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendCollaboratorEmail(String toEmail, String ownerEmail, String noteTitle) {
 
-        String link = "http://localhost:4200/signin";
+        String link = frontendUrl + "/signin";
 
         String html = """
 <!DOCTYPE html>
@@ -306,7 +328,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendReminderAddedEmail(String toEmail, String noteTitle, java.time.LocalDateTime reminderTime) {
-        String link = "http://localhost:4200/signin";
+        String link = frontendUrl + "/signin";
         String formattedTime = reminderTime.toString().replace("T", " ");
         String html = """
 <!DOCTYPE html>
@@ -323,13 +345,13 @@ public class EmailServiceImpl implements EmailService {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   .wrapper {
-    width: 100%%;
+    width: 100%;
     table-layout: fixed;
     background-color: #f8fafc;
     padding: 40px 0;
   }
   .main-table {
-    width: 100%%;
+    width: 100%;
     max-width: 550px;
     margin: 0 auto;
     background-color: #ffffff;
@@ -475,25 +497,84 @@ public class EmailServiceImpl implements EmailService {
                            String subject,
                            String body) {
 
+        System.out.println("📧 [EMAIL INITIATED] Attempting to send email to: " + to + " | Subject: " + subject);
+
+        // 1. Attempt delivery via JavaMailSender (SMTP)
         try {
-
             MimeMessage message = mailSender.createMimeMessage();
-
             MimeMessageHelper helper =
                     new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
+            helper.setFrom(fromEmail, "Fundoo Notes");
             helper.setTo(to);
             helper.setSubject(subject);
-
             helper.setText(body, true);
 
             mailSender.send(message);
+            System.out.println("✅ [SMTP SUCCESS] Email successfully delivered via JavaMailSender to " + to);
+            return;
 
         } catch (Exception e) {
-            System.err.println("SMTP EMAIL SENDING ERROR to " + to + " [Subject: " + subject + "]: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Failed to send email", e);
+            System.err.println("⚠️ [SMTP FAILED] Could not send via SMTP to " + to + ": " + e.getMessage());
         }
+
+        // 2. Fallback: Attempt delivery via Brevo REST API (HTTPS port 443)
+        if (mailPassword != null && !mailPassword.trim().isEmpty()) {
+            try {
+                System.out.println("🔄 [BREVO REST API] Attempting fallback over HTTPS to " + to + "...");
+                sendViaBrevoApi(to, subject, body);
+                System.out.println("✅ [BREVO REST API SUCCESS] Email successfully delivered via Brevo API to " + to);
+                return;
+            } catch (Exception apiEx) {
+                System.err.println("❌ [BREVO REST API FAILED] " + apiEx.getMessage());
+            }
+        } else {
+            System.err.println("⚠️ [NOTICE] Brevo key / password is empty. Set SPRING_MAIL_PASSWORD in Render Environment Variables.");
+        }
+
+        throw new RuntimeException("Failed to send email to " + to + ". Please verify Brevo SMTP Key and Sender verification.");
+    }
+
+    private void sendViaBrevoApi(String to, String subject, String htmlContent) throws Exception {
+        URI uri = new URI("https://api.brevo.com/v3/smtp/email");
+        URL url = uri.toURL();
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("api-key", mailPassword.trim());
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setRequestProperty("Accept", "application/json");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(10000);
+        conn.setReadTimeout(10000);
+
+        Map<String, Object> payload = new HashMap<>();
+        Map<String, String> sender = new HashMap<>();
+        sender.put("name", "Fundoo Notes");
+        sender.put("email", fromEmail.trim());
+        payload.put("sender", sender);
+
+        Map<String, String> recipient = new HashMap<>();
+        recipient.put("email", to.trim());
+        payload.put("to", List.of(recipient));
+
+        payload.put("subject", subject);
+        payload.put("htmlContent", htmlContent);
+
+        byte[] jsonBytes = objectMapper.writeValueAsBytes(payload);
+
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(jsonBytes, 0, jsonBytes.length);
+        }
+
+        int status = conn.getResponseCode();
+        if (status >= 200 && status < 300) {
+            return;
+        }
+
+        InputStream errorStream = conn.getErrorStream();
+        String errorMsg = errorStream != null
+                ? new String(errorStream.readAllBytes(), StandardCharsets.UTF_8)
+                : "HTTP " + status;
+        throw new RuntimeException("Brevo API error (" + status + "): " + errorMsg);
     }
 }

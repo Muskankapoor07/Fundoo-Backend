@@ -73,4 +73,11 @@ public class UserController {
                 token, newPassword);
         return ResponseEntity.ok(new ApiResponse(200, message));
     }
+
+    // DIRECT TEST EMAIL DIAGNOSTIC ENDPOINT
+    @PostMapping("/test-mail")
+    public ResponseEntity<ApiResponse> testMail(@RequestParam String email) {
+        String result = userService.forgotPassword(email);
+        return ResponseEntity.ok(new ApiResponse(200, "Test email dispatched: " + result));
+    }
 } 
