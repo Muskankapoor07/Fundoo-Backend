@@ -34,10 +34,9 @@ class FundooNotesApplicationTests {
     void testSendEmail() {
         try {
             System.out.println("Sending test email...");
-            emailService.sendReminderAddedEmail(
+            emailService.sendReminderEmail(
                 "test@example.com",
-                "Test Note Reminder",
-                LocalDateTime.now()
+                "Test Note Reminder"
             );
             System.out.println("Email sent successfully in test!");
         } catch (Exception e) {

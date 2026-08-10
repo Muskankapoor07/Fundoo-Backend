@@ -9,6 +9,4 @@ public interface EmailService {
     void sendReminderEmail(String toEmail, String noteTitle);
 
     void sendCollaboratorEmail(String toEmail, String ownerEmail, String noteTitle);
-
-    void sendReminderAddedEmail(String toEmail, String noteTitle, java.time.LocalDateTime reminderTime);
 }

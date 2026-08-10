@@ -130,16 +130,6 @@ public class NoteServiceImpl implements NoteService {
             note.setReminderSent(false);
         }
         Note savedNote = noteRepository.save(note);
-        if (dto.getReminder() != null) {
-            try {
-                String title = (savedNote.getTitle() != null && !savedNote.getTitle().trim().isEmpty())
-                        ? savedNote.getTitle()
-                        : "Untitled Note";
-                emailService.sendReminderAddedEmail(email, title, dto.getReminder());
-            } catch (Exception e) {
-                System.err.println("Failed to send reminder added confirmation email: " + e.getMessage());
-            }
-        }
         return toDTO(savedNote);
     }
 
@@ -269,16 +259,6 @@ public class NoteServiceImpl implements NoteService {
         note.setReminder(dto.getReminderTime());
         note.setReminderSent(false);
         Note savedNote = noteRepository.save(note);
-
-        // Send instant confirmation email for the newly scheduled reminder
-        try {
-            String title = (savedNote.getTitle() != null && !savedNote.getTitle().trim().isEmpty())
-                    ? savedNote.getTitle()
-                    : "Untitled Note";
-            emailService.sendReminderAddedEmail(email, title, dto.getReminderTime());
-        } catch (Exception e) {
-            System.err.println("Failed to send reminder added confirmation email: " + e.getMessage());
-        }
 
         return toDTO(savedNote);
     }
