@@ -28,7 +28,7 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${spring.mail.from:kapoormuskan700@gmail.com}")
+    @Value("${spring.mail.from:kapoormuskan801@gmail.com}")
     private String fromEmail;
 
     @Value("${spring.mail.password:}")
