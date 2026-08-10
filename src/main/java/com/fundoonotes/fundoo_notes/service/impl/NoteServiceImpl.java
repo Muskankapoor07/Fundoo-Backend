@@ -157,6 +157,10 @@ public class NoteServiceImpl implements NoteService {
         if (dto.getColor() != null) {
             note.setColor(dto.getColor());
         }
+        if (dto.getReminder() != null) {
+            note.setReminder(dto.getReminder());
+            note.setReminderSent(false);
+        }
 
         Note updatedNote = noteRepository.save(note);
         return toDTO(updatedNote);

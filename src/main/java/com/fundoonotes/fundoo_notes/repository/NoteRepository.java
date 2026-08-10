@@ -57,6 +57,6 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByReminderLessThanEqualAndIsReminderSentFalseAndIsTrashedFalse(
             LocalDateTime reminderTime);
 
-    @Query("SELECT n FROM Note n WHERE n.reminder IS NOT NULL AND n.reminder <= :now AND (n.isReminderSent = false OR n.isReminderSent IS NULL) AND n.isTrashed = false")
+    @Query("SELECT n FROM Note n LEFT JOIN FETCH n.user WHERE n.reminder IS NOT NULL AND n.reminder <= :now AND (n.isReminderSent = false OR n.isReminderSent IS NULL) AND n.isTrashed = false")
     List<Note> findDueReminders(@Param("now") LocalDateTime now);
 }

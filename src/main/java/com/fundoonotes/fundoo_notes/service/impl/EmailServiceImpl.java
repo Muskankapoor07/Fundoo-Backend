@@ -330,7 +330,11 @@ public class EmailServiceImpl implements EmailService {
                            String subject,
                            String body) {
         String lastError = "Unknown error";
-        System.out.println("📧 [EMAIL INITIATED] Attempting to send email to: " + to + " | Subject: " + subject);
+        String effectiveFrom = (fromEmail != null && !fromEmail.contains("your_email") && !fromEmail.contains("your_mail") && !fromEmail.trim().isEmpty())
+                ? fromEmail.trim()
+                : "kapoormuskan801@gmail.com";
+
+        System.out.println("📧 [EMAIL INITIATED] Attempting to send email to: " + to + " from: " + effectiveFrom + " | Subject: " + subject);
 
         // 1. Attempt delivery via JavaMailSender (SMTP)
         try {
@@ -338,7 +342,7 @@ public class EmailServiceImpl implements EmailService {
             MimeMessageHelper helper =
                     new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(fromEmail, "Fundoo Notes");
+            helper.setFrom(effectiveFrom, "Fundoo Notes");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, true);
@@ -356,7 +360,7 @@ public class EmailServiceImpl implements EmailService {
         if (mailPassword != null && !mailPassword.trim().isEmpty()) {
             try {
                 System.out.println("🔄 [BREVO REST API] Attempting fallback over HTTPS to " + to + "...");
-                sendViaBrevoApi(to, subject, body);
+                sendViaBrevoApi(to, subject, body, effectiveFrom);
                 System.out.println("✅ [BREVO REST API SUCCESS] Email successfully delivered via Brevo API to " + to);
                 return;
             } catch (Exception apiEx) {
@@ -370,7 +374,7 @@ public class EmailServiceImpl implements EmailService {
         throw new RuntimeException("Failed to send email to " + to + ": " + lastError);
     }
 
-    private void sendViaBrevoApi(String to, String subject, String htmlContent) throws Exception {
+    private void sendViaBrevoApi(String to, String subject, String htmlContent, String effectiveFrom) throws Exception {
         URI uri = new URI("https://api.brevo.com/v3/smtp/email");
         URL url = uri.toURL();
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -385,7 +389,7 @@ public class EmailServiceImpl implements EmailService {
         Map<String, Object> payload = new HashMap<>();
         Map<String, String> sender = new HashMap<>();
         sender.put("name", "Fundoo Notes");
-        sender.put("email", fromEmail.trim());
+        sender.put("email", effectiveFrom.trim());
         payload.put("sender", sender);
 
         Map<String, String> recipient = new HashMap<>();
