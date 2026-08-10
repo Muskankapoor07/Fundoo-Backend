@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,6 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class NoteServiceImpl implements NoteService {
+
+    private static final ZoneId IST_ZONE = ZoneId.of("Asia/Kolkata");
 
     @Autowired
     private NoteRepository noteRepository;
@@ -260,7 +263,7 @@ public class NoteServiceImpl implements NoteService {
         if (dto.getReminderTime() == null) {
             throw new RuntimeException("Reminder time is required");
         }
-        if (dto.getReminderTime().isBefore(LocalDateTime.now().minusMinutes(2))) {
+        if (dto.getReminderTime().isBefore(LocalDateTime.now(IST_ZONE).minusMinutes(2))) {
             throw new RuntimeException("Reminder time must be in the future");
         }
         note.setReminder(dto.getReminderTime());

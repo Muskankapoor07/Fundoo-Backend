@@ -9,10 +9,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Component
 public class ReminderScheduler {
+
+    private static final ZoneId IST_ZONE = ZoneId.of("Asia/Kolkata");
 
     @Autowired
     private NoteRepository noteRepository;
@@ -27,7 +30,7 @@ public class ReminderScheduler {
     @Transactional
     public void checkReminders() {
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(IST_ZONE);
 
         List<Note> dueNotes = noteRepository.findDueReminders(now);
 
@@ -35,7 +38,7 @@ public class ReminderScheduler {
             return;
         }
 
-        System.out.println("=== Found " + dueNotes.size() + " reminder(s) due at " + now + " ===");
+        System.out.println("=== Found " + dueNotes.size() + " reminder(s) due at IST: " + now + " ===");
 
         for (Note note : dueNotes) {
             String title = (note.getTitle() != null && !note.getTitle().isEmpty()) ? note.getTitle() : "Untitled Note";

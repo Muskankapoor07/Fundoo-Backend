@@ -329,7 +329,13 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendReminderAddedEmail(String toEmail, String noteTitle, java.time.LocalDateTime reminderTime) {
         String link = frontendUrl + "/signin";
-        String formattedTime = reminderTime.toString().replace("T", " ");
+        String formattedTime;
+        try {
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a");
+            formattedTime = reminderTime.format(formatter) + " (IST)";
+        } catch (Exception e) {
+            formattedTime = reminderTime.toString().replace("T", " ") + " (IST)";
+        }
         String html = """
 <!DOCTYPE html>
 <html>

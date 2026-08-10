@@ -16,7 +16,8 @@ public class FundooNotesApplication {
 	@PostConstruct
 	public void init() {
 		TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata"));
-		System.out.println("JVM timezone set to Asia/Kolkata: " + java.time.LocalDateTime.now());
+		System.setProperty("user.timezone", "Asia/Kolkata");
+		System.out.println("JVM timezone set to Asia/Kolkata (IST): " + java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Kolkata")));
 	}
 
 	public static void main(String[] args) {
